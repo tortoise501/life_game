@@ -1,5 +1,6 @@
 mod cell;
 mod camera;
+mod timer;
 
 use bevy::prelude::*;
 use cell::CellPlugin;

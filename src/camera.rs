@@ -12,7 +12,7 @@ impl Plugin for CameraPlugin {
 
 fn spawn_camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle {
-        transform: Transform::from_xyz(0.0, 30.0, 0.0),
+        transform: Transform::from_xyz(0.0, 2.0, 0.0),
         ..default()
     });
 }
