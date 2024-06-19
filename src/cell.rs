@@ -44,7 +44,7 @@ struct CellLivingNeighborsCount(u32);
 #[derive(Component, Debug)]
 struct CellCoordinates(IVec2);
 
-fn update_marks_system(mut query: Query<(&mut CellState, &CellLivingNeighborsCount)>) {
+fn update_marks_system(mut query: Query<(&mut CellState, &CellLivingNeighborsCount)>,mut next_state: ResMut<NextState<crate::timer::AllowNextFrame>>) {
     //info!("starting marks");
     for (mut state, neighbors) in &mut query {
         let curr_state = state.clone();
@@ -55,6 +55,7 @@ fn update_marks_system(mut query: Query<(&mut CellState, &CellLivingNeighborsCou
             _ => CellState::Unsettled,
         }
     }
+    next_state.set(crate::timer::AllowNextFrame::No);
 }
 fn update_neighbors_system(
     mut commands: Commands,
@@ -112,7 +113,7 @@ fn update_neighbors_system(
 
 fn clear_dead_cells_system(mut commands: Commands, query: Query<(Entity, &CellState)>) {
     // //info!("starting cleaning");
-    for (mut cell, state) in &query {
+    for (cell, state) in &query {
         match state {
             CellState::Dead => commands.entity(cell).despawn(),
             _ => (),
@@ -135,7 +136,8 @@ pub struct CellPlugin;
 impl Plugin for CellPlugin {
     fn build(&self, app: &mut App) {
         app
-            .init_state::<WaitForFrame>()
+        .add_plugins(crate::timer::TimerPlugin)
+            .init_state::<crate::timer::AllowNextFrame>()
             .add_systems(Startup, spawn_cells)
             .add_systems(
                 Update,
@@ -146,7 +148,7 @@ impl Plugin for CellPlugin {
                     update_cells_visuals,
                 )
                     .chain()
-                    .run_if(in_state(WaitForFrame::Waiting)),
+                    .run_if(in_state(crate::timer::AllowNextFrame::Yes)),
             );
     }
 }
@@ -176,19 +178,9 @@ fn spawn_cells(mut commands: Commands, asset_server: Res<AssetServer>) {
     }
 }
 
-// fn check_cells(query: Query<(&CellCoordinates, &CellState, &CellLivingNeighborsCount)>) {
-//     //info!("checking");
-//     for (coords, state, neighbors) in &query {
-//         //info!(
-//             "coords = {:?}    state = {:?}    neighbors = {:?}",
-//             coords, state, neighbors
-//         );
-//     }
+// #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
+// pub enum WaitForFrame {
+//     #[default]
+//     Waiting,
+//     Blocking,
 // }
-
-#[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
-enum WaitForFrame {
-    #[default]
-    Waiting,
-    Blocking,
-}

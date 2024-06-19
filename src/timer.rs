@@ -1,4 +1,6 @@
-use bevy::prelude::*;
+use std::time::{Duration, SystemTime};
+
+use bevy::{input::keyboard::Key, prelude::*};
 
 pub struct TimerPlugin;
 
@@ -10,49 +12,21 @@ impl Plugin for TimerPlugin {
         //     .add_systems(Startup, spawn_cells)
 
         app.init_resource::<ButtonInput<KeyCode>>()
-        .init_state::<GamePause>();
+        .insert_resource(Speed(1))
+        .insert_resource(Timer{ last_frame: SystemTime::now() })
+        .init_state::<GamePause>()
+        .add_systems(Update, keyboard_input)
+        .add_systems(Update,check_timer.run_if(in_state(GamePause::Running)));
     }
 }
 
-// fn spawn_cells(mut commands: Commands, asset_server: Res<AssetServer>) {
-//     for x in -1..2 {
-//         let mut cell = CellBundle::from_coords(
-//             Vec2 {
-//                 x: x as f32,
-//                 y: 0.0,
-//             },
-//             &asset_server,
-//         );
-//         cell.state = CellState::Alive;
-//         commands.spawn(cell);
-//     }
-//     for x in 0..3 {
-//         let mut cell = CellBundle::from_coords(
-//             Vec2 {
-//                 x: x as f32,
-//                 y: -1.0,
-//             },
-//             &asset_server,
-//         );
-//         cell.state = CellState::Alive;
-//         commands.spawn(cell);
-//     }
-// }
 
-// fn check_cells(query: Query<(&CellCoordinates, &CellState, &CellLivingNeighborsCount)>) {
-//     info!("checking");
-//     for (coords, state, neighbors) in &query {
-//         info!(
-//             "coords = {:?}    state = {:?}    neighbors = {:?}",
-//             coords, state, neighbors
-//         );
-//     }
-// }
 
 fn keyboard_input(
     keys: Res<ButtonInput<KeyCode>>,
     state: Res<State<GamePause>>,
     mut next_state: ResMut<NextState<GamePause>>,
+    mut speed: ResMut<Speed>
 ) {
     if keys.just_pressed(KeyCode::Space) {
         match state.get() {
@@ -60,7 +34,18 @@ fn keyboard_input(
             GamePause::Running => next_state.set(GamePause::Paused),
         }
     }
+    if keys.just_pressed(KeyCode::ArrowLeft){
+        // info!("left     {:?}",speed.0);
+        speed.0 = num::clamp(speed.0 - 1,1,60);
+    }
+    if keys.just_pressed(KeyCode::ArrowRight){
+        // info!("right     {:?}",speed.0);
+        speed.0 = num::clamp(speed.0 + 1,1,60);
+    }
 }
+
+#[derive(Resource)]
+struct Speed(u32);
 
 #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
 enum GamePause {
@@ -70,8 +55,24 @@ enum GamePause {
 }
 
 #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
-enum AllowNextFrame {
+pub enum AllowNextFrame {
     #[default]
     No,
     Yes,
+}
+
+#[derive(Resource)]
+struct Timer {
+    last_frame: SystemTime,
+}
+
+fn check_timer(mut timer: ResMut<Timer>,mut allow_frame: ResMut<NextState<AllowNextFrame>>, speed:Res<Speed>){
+    let passed_time = SystemTime::now().duration_since(timer.last_frame).unwrap_or(Duration::from_secs(0));
+    if speed.0 == 0{
+        return;//?Do Something
+    }
+    if passed_time > Duration::from_secs_f32(1.0 / speed.0 as f32){
+        allow_frame.set(AllowNextFrame::Yes);
+        timer.last_frame = SystemTime::now();
+    }
 }
