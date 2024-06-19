@@ -32,17 +32,9 @@ fn camera_zoom(
         for mut projection in &mut query {
             match ev.unit {
                 MouseScrollUnit::Line => {
-                    println!(
-                        "Scroll (line units): vertical: {}, horizontal: {}",
-                        ev.y, ev.x
-                    );
                     projection.scale -= 0.1 * ev.y; //? add delta seconds?
                 }
                 MouseScrollUnit::Pixel => {
-                    println!(
-                        "Scroll (pixel units): vertical: {}, horizontal: {}",
-                        ev.y, ev.x
-                    );
                     projection.scale -= 0.1 * ev.y; //? add delta seconds?
                 }
             }
@@ -58,7 +50,6 @@ fn camera_movement(
     for mut camera_transform in &mut query {
         if buttons.pressed(MouseButton::Middle) {
             for ev in evr_motion.read() {
-                println!("Mouse moved: X: {} px, Y: {} px", ev.delta.x, ev.delta.y);
                 camera_transform.translation += Vec3 {
                     x: ev.delta.x * -1.0,
                     y: ev.delta.y,

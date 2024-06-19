@@ -154,28 +154,39 @@ impl Plugin for CellPlugin {
 }
 
 fn spawn_cells(mut commands: Commands, asset_server: Res<AssetServer>) {
-    for x in -1..2 {
+    for y in 1..=3 {
         let mut cell = CellBundle::from_coords(
             Vec2 {
-                x: x as f32,
-                y: 0.0,
+                x: 0.0,
+                y: y as f32,
             },
             &asset_server,
         );
         cell.state = CellState::Alive;
         commands.spawn(cell);
     }
-    for x in 0..3 {
-        let mut cell = CellBundle::from_coords(
-            Vec2 {
-                x: x as f32,
-                y: -1.0,
-            },
-            &asset_server,
-        );
-        cell.state = CellState::Alive;
-        commands.spawn(cell);
-    }
+
+
+    let mut cell = CellBundle::from_coords(
+        Vec2 {
+            x: -1.0,
+            y: 1.0,
+        },
+        &asset_server,
+    );
+    cell.state = CellState::Alive;
+    commands.spawn(cell);
+
+
+    let mut cell = CellBundle::from_coords(
+        Vec2 {
+            x: -2.0,
+            y: 2.0,
+        },
+        &asset_server,
+    );
+    cell.state = CellState::Alive;
+    commands.spawn(cell);
 }
 
 // #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
