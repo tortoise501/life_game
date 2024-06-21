@@ -1,7 +1,7 @@
 
 use bevy::{
     prelude::*,
-    utils::hashbrown::HashMap,
+    utils::{hashbrown::HashMap, petgraph::csr::Neighbors},
 };
 
 pub const CELL_WIDTH: f32 = 100.0;
@@ -14,7 +14,6 @@ pub struct CellBundle {
 }
 impl CellBundle {
     pub fn from_coords(coords: Vec2, asset_server: &AssetServer) -> CellBundle {
-        info!("cell: {}",coords);
         CellBundle {
             sprite: SpriteBundle {
                 transform: Transform::from_xyz(coords.x * CELL_WIDTH, coords.y * CELL_WIDTH, 0.0),
@@ -27,6 +26,26 @@ impl CellBundle {
                 x: coords.x as i32,
                 y: coords.y as i32,
             }),
+        }
+    }
+}
+
+fn update_texture_system(mut query: Query<(&mut Handle<Image>,&mut Visibility,&CellState,&CellLivingNeighborsCount)>,asset_server: Res<AssetServer>,){
+    for (mut sprite,mut visibility,state,neighbors) in &mut query{
+
+        match state {
+            CellState::Alive => {
+                *sprite = asset_server.load(format!("cell.png"));
+                *visibility = Visibility::Visible;
+            },
+            CellState::Dead => {
+                *sprite = asset_server.load(format!("n{}.png",neighbors.0));
+                *visibility = Visibility::Hidden;
+            },
+            CellState::Unsettled => {
+                *sprite = asset_server.load(format!("n{}.png",neighbors.0));
+                *visibility = Visibility::Hidden;
+            },
         }
     }
 }
@@ -62,7 +81,9 @@ fn update_neighbors_system(
     asset_server: Res<AssetServer>,
     mut query: Query<(&CellCoordinates, &CellState, &mut CellLivingNeighborsCount)>,
 ) {
-    //info!("starting neighbors");
+    for (_,_,mut neighbors) in &mut query{
+        neighbors.0 = 0;
+    }
     let mut new_cells: HashMap<IVec2, u32> = HashMap::new();
     for (coords, state, _neighbors) in &mut query {
         if let CellState::Alive = state {
@@ -75,10 +96,8 @@ fn update_neighbors_system(
                         x: x + coords.0.x,
                         y: y + coords.0.y,
                     };
-                    //info!("{:?}", coords.0);
                     let a = new_cells.entry(current_coord);
                     *a.or_insert(0) += 1;
-                    //info!("{:?}", new_cells.get_key_value(&current_coord));
                 }
             }
         }
@@ -112,22 +131,14 @@ fn update_neighbors_system(
     }
 }
 
-fn clear_dead_cells_system(mut commands: Commands, query: Query<(Entity, &CellState)>) {
+fn clear_dead_cells_system(mut commands: Commands, query: Query<(Entity, &CellState, & CellLivingNeighborsCount)>) {
     // //info!("starting cleaning");
-    for (cell, state) in &query {
+    for (cell, state,neighbors) in &query {
         match state {
             CellState::Dead => commands.entity(cell).despawn(),
-            _ => (),
-        }
-    }
-}
-fn update_cells_visuals(mut query: Query<(&mut Visibility, &CellState)>) {
-    // //info!("starting visuals");
-    for (mut visibility, state) in &mut query {
-        match state {
-            CellState::Alive => *visibility = Visibility::Visible,
-            CellState::Dead => *visibility = Visibility::Hidden,
-            CellState::Unsettled => *visibility = Visibility::Hidden,
+            // CellState::Unsettled if neighbors.0 == 0 => commands.entity(cell).despawn(),
+            // CellState::Alive if neighbors.0 != 2 && neighbors.0 != 3 => commands.entity(cell).despawn(),
+            _ => ()
         }
     }
 }
@@ -145,54 +156,13 @@ impl Plugin for CellPlugin {
                 (
                     update_neighbors_system,
                     update_marks_system,
+                    update_neighbors_system,
+                    update_texture_system,
                     clear_dead_cells_system,
-                    update_cells_visuals,
+                    // update_cells_visuals,
                 )
                     .chain()
                     .run_if(in_state(crate::timer::AllowNextFrame::Yes)),
             );
     }
 }
-
-fn spawn_cells(mut commands: Commands, asset_server: Res<AssetServer>) {
-    for y in 1..=3 {
-        let mut cell = CellBundle::from_coords(
-            Vec2 {
-                x: 0.0,
-                y: y as f32,
-            },
-            &asset_server,
-        );
-        cell.state = CellState::Alive;
-        commands.spawn(cell);
-    }
-
-
-    let mut cell = CellBundle::from_coords(
-        Vec2 {
-            x: -1.0,
-            y: 1.0,
-        },
-        &asset_server,
-    );
-    cell.state = CellState::Alive;
-    commands.spawn(cell);
-
-
-    let mut cell = CellBundle::from_coords(
-        Vec2 {
-            x: -2.0,
-            y: 2.0,
-        },
-        &asset_server,
-    );
-    cell.state = CellState::Alive;
-    commands.spawn(cell);
-}
-
-// #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
-// pub enum WaitForFrame {
-//     #[default]
-//     Waiting,
-//     Blocking,
-// }
