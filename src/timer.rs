@@ -1,6 +1,6 @@
 use std::time::{Duration, SystemTime};
 
-use bevy::{input::keyboard::Key, prelude::*};
+use bevy::prelude::*;
 
 pub struct TimerPlugin;
 

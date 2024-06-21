@@ -1,8 +1,7 @@
-use std::{thread::sleep, time::Duration};
 
 use bevy::{
     prelude::*,
-    utils::{hashbrown::HashMap, info, petgraph::adj::Neighbors},
+    utils::hashbrown::HashMap,
 };
 
 const CELL_WIDTH: f32 = 100.0;
@@ -64,7 +63,7 @@ fn update_neighbors_system(
 ) {
     //info!("starting neighbors");
     let mut new_cells: HashMap<IVec2, u32> = HashMap::new();
-    for (coords, state, neighbors) in &mut query {
+    for (coords, state, _neighbors) in &mut query {
         if let CellState::Alive = state {
             for x in -1..=1 {
                 for y in -1..=1 {
@@ -84,7 +83,7 @@ fn update_neighbors_system(
         }
     }
     //info!("{:?}", new_cells.capacity());
-    for (coords, state, mut neighbors) in &mut query {
+    for (coords, _state, mut neighbors) in &mut query {
         match new_cells.get(&IVec2 {
             x: coords.0.x,
             y: coords.0.y,
