@@ -8,6 +8,6 @@ use camera::CameraPlugin;
 
 fn main() {
     let app = App::new()
-        .add_plugins((CameraPlugin,DefaultPlugins, CellPlugin))
+        .add_plugins((DefaultPlugins, CellPlugin,CameraPlugin))
         .run();
 }
