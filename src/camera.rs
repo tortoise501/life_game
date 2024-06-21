@@ -65,6 +65,12 @@ fn gris_system(
                 let move_vector = screen_size/4.0;
                 info!("move_vector {}",move_vector);
                 let side_vector = Vec2{x: -1.0 + 2.0 * ((grid_id.0 >> 1) & 1) as f32 ,y:-1.0 + 2.0 * (grid_id.0 & 1) as f32};
+                if (((grid_id.0 >> 1) + 1) & 1 == 1){
+                    sprite.flip_x = true;
+                }
+                if ((grid_id.0 & 1) == 1){
+                    sprite.flip_y = true;
+                }
                 info!("side_vector {}   id {}",side_vector,grid_id.0);
                 let pos_vec = snapped_camera_pos + (move_vector * side_vector);
                 info!("pos_vec {}",pos_vec);
