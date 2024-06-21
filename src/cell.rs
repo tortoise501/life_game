@@ -4,23 +4,24 @@ use bevy::{
     utils::hashbrown::HashMap,
 };
 
-const CELL_WIDTH: f32 = 100.0;
+pub const CELL_WIDTH: f32 = 100.0;
 #[derive(Bundle)]
-struct CellBundle {
+pub struct CellBundle {
     sprite: SpriteBundle,
     state: CellState,
     neighbors: CellLivingNeighborsCount,
     coords: CellCoordinates,
 }
 impl CellBundle {
-    fn from_coords(coords: Vec2, asset_server: &AssetServer) -> CellBundle {
+    pub fn from_coords(coords: Vec2, asset_server: &AssetServer) -> CellBundle {
+        info!("cell: {}",coords);
         CellBundle {
             sprite: SpriteBundle {
                 transform: Transform::from_xyz(coords.x * CELL_WIDTH, coords.y * CELL_WIDTH, 0.0),
                 texture: asset_server.load("cell.png"),
                 ..default()
             },
-            state: CellState::Unsettled,
+            state: CellState::Alive,
             neighbors: CellLivingNeighborsCount(0),
             coords: CellCoordinates(IVec2 {
                 x: coords.x as i32,
@@ -106,6 +107,7 @@ fn update_neighbors_system(
             &asset_server,
         );
         cell.neighbors.0 = neighbors;
+        cell.state = CellState::Unsettled;
         commands.spawn(cell);
     }
 }
@@ -137,7 +139,7 @@ impl Plugin for CellPlugin {
         app
         .add_plugins(crate::timer::TimerPlugin)
             .init_state::<crate::timer::AllowNextFrame>()
-            .add_systems(Startup, spawn_cells)
+            // .add_systems(Startup, spawn_cells)
             .add_systems(
                 Update,
                 (
