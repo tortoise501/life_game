@@ -1,8 +1,4 @@
-
-use bevy::{
-    prelude::*,
-    utils::{hashbrown::HashMap, petgraph::csr::Neighbors},
-};
+use bevy::{prelude::*, utils::hashbrown::HashMap};
 
 pub const CELL_WIDTH: f32 = 100.0;
 #[derive(Bundle)]
@@ -30,22 +26,29 @@ impl CellBundle {
     }
 }
 
-fn update_texture_system(mut query: Query<(&mut Handle<Image>,&mut Visibility,&CellState,&CellLivingNeighborsCount)>,asset_server: Res<AssetServer>,){
-    for (mut sprite,mut visibility,state,neighbors) in &mut query{
-
+fn update_texture_system(
+    mut query: Query<(
+        &mut Handle<Image>,
+        &mut Visibility,
+        &CellState,
+        &CellLivingNeighborsCount,
+    )>,
+    asset_server: Res<AssetServer>,
+) {
+    for (mut sprite, mut visibility, state, neighbors) in &mut query {
         match state {
             CellState::Alive => {
                 *sprite = asset_server.load(format!("cell.png"));
                 *visibility = Visibility::Visible;
-            },
+            }
             CellState::Dead => {
-                *sprite = asset_server.load(format!("n{}.png",neighbors.0));
+                *sprite = asset_server.load(format!("n{}.png", neighbors.0));
                 *visibility = Visibility::Hidden;
-            },
+            }
             CellState::Unsettled => {
-                *sprite = asset_server.load(format!("n{}.png",neighbors.0));
+                *sprite = asset_server.load(format!("n{}.png", neighbors.0));
                 *visibility = Visibility::Hidden;
-            },
+            }
         }
     }
 }
@@ -63,7 +66,10 @@ struct CellLivingNeighborsCount(u32);
 #[derive(Component, Debug)]
 struct CellCoordinates(IVec2);
 
-fn update_marks_system(mut query: Query<(&mut CellState, &CellLivingNeighborsCount)>,mut next_state: ResMut<NextState<crate::timer::AllowNextFrame>>) {
+fn update_marks_system(
+    mut query: Query<(&mut CellState, &CellLivingNeighborsCount)>,
+    mut next_state: ResMut<NextState<crate::timer::AllowNextFrame>>,
+) {
     //info!("starting marks");
     for (mut state, neighbors) in &mut query {
         let curr_state = state.clone();
@@ -81,7 +87,7 @@ fn update_neighbors_system(
     asset_server: Res<AssetServer>,
     mut query: Query<(&CellCoordinates, &CellState, &mut CellLivingNeighborsCount)>,
 ) {
-    for (_,_,mut neighbors) in &mut query{
+    for (_, _, mut neighbors) in &mut query {
         neighbors.0 = 0;
     }
     let mut new_cells: HashMap<IVec2, u32> = HashMap::new();
@@ -131,14 +137,14 @@ fn update_neighbors_system(
     }
 }
 
-fn clear_dead_cells_system(mut commands: Commands, query: Query<(Entity, &CellState, & CellLivingNeighborsCount)>) {
+fn clear_dead_cells_system(mut commands: Commands, query: Query<(Entity, &CellState)>) {
     // //info!("starting cleaning");
-    for (cell, state,neighbors) in &query {
+    for (cell, state) in &query {
         match state {
             CellState::Dead => commands.entity(cell).despawn(),
             // CellState::Unsettled if neighbors.0 == 0 => commands.entity(cell).despawn(),
             // CellState::Alive if neighbors.0 != 2 && neighbors.0 != 3 => commands.entity(cell).despawn(),
-            _ => ()
+            _ => (),
         }
     }
 }
@@ -147,8 +153,7 @@ pub struct CellPlugin;
 
 impl Plugin for CellPlugin {
     fn build(&self, app: &mut App) {
-        app
-        .add_plugins(crate::timer::TimerPlugin)
+        app.add_plugins(crate::timer::TimerPlugin)
             .init_state::<crate::timer::AllowNextFrame>()
             // .add_systems(Startup, spawn_cells)
             .add_systems(

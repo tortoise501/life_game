@@ -1,5 +1,6 @@
 use bevy::{
-    input::mouse::{MouseMotion, MouseWheel}, prelude::*
+    input::mouse::{MouseMotion, MouseWheel},
+    prelude::*,
 };
 
 // const CAMERA_DISTANCE: f32 = 24.0;
@@ -22,12 +23,11 @@ fn spawn_camera(mut commands: Commands) {
     });
 }
 
-
 fn camera_movement(
     buttons: Res<ButtonInput<MouseButton>>,
     mut evr_motion: EventReader<MouseMotion>,
     mut query: Query<&mut Transform, With<Camera>>,
-    zoom: Res<Zoom>
+    zoom: Res<Zoom>,
 ) {
     for mut camera_transform in &mut query {
         if buttons.pressed(MouseButton::Middle) {
@@ -43,7 +43,7 @@ fn camera_movement(
 }
 
 #[derive(Resource)]
-struct Zoom (f32);
+struct Zoom(f32);
 
 fn camera_zoom(
     mut evr_scroll: EventReader<MouseWheel>,
