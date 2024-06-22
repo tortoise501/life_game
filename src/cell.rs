@@ -3,7 +3,7 @@ use bevy::{prelude::*, utils::hashbrown::HashMap};
 pub const CELL_WIDTH: f32 = 100.0;
 #[derive(Bundle)]
 pub struct CellBundle {
-    sprite: SpriteBundle,
+    pub sprite: SpriteBundle,
     state: CellState,
     neighbors: CellLivingNeighborsCount,
     coords: CellCoordinates,
@@ -42,11 +42,11 @@ fn update_texture_system(
                 *visibility = Visibility::Visible;
             }
             CellState::Dead => {
-                *sprite = asset_server.load(format!("n{}.png", neighbors.0));
+            //    *sprite = asset_server.load(format!("n{}.png", neighbors.0));
                 *visibility = Visibility::Hidden;
             }
             CellState::Unsettled => {
-                *sprite = asset_server.load(format!("n{}.png", neighbors.0));
+            //    *sprite = asset_server.load(format!("n{}.png", neighbors.0));
                 *visibility = Visibility::Hidden;
             }
         }
@@ -54,7 +54,7 @@ fn update_texture_system(
 }
 
 #[derive(Component, Debug, Clone)]
-enum CellState {
+pub enum CellState {
     Alive,
     Dead,
     Unsettled,
@@ -161,7 +161,6 @@ impl Plugin for CellPlugin {
                 (
                     update_neighbors_system,
                     update_marks_system,
-                    update_neighbors_system,
                     update_texture_system,
                     clear_dead_cells_system,
                     // update_cells_visuals,
