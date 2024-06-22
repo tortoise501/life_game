@@ -1,5 +1,28 @@
 use bevy::{prelude::*, utils::hashbrown::HashMap};
 
+pub struct CellPlugin;
+
+impl Plugin for CellPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugins(crate::timer::TimerPlugin)
+            .init_state::<crate::timer::AllowNextFrame>()
+            // .add_systems(Startup, spawn_cells)
+            .add_systems(
+                Update,
+                (
+                    update_neighbors_system,
+                    update_marks_system,
+                    update_texture_system,
+                    clear_dead_cells_system,
+                    // update_cells_visuals,
+                )
+                    .chain()
+                    .run_if(in_state(crate::timer::AllowNextFrame::Yes)),
+            );
+    }
+}
+
+
 pub const CELL_WIDTH: f32 = 100.0;
 #[derive(Bundle)]
 pub struct CellBundle {
@@ -64,13 +87,12 @@ pub enum CellState {
 struct CellLivingNeighborsCount(u32);
 
 #[derive(Component, Debug)]
-struct CellCoordinates(IVec2);
+pub struct CellCoordinates(pub IVec2);
 
 fn update_marks_system(
     mut query: Query<(&mut CellState, &CellLivingNeighborsCount)>,
     mut next_state: ResMut<NextState<crate::timer::AllowNextFrame>>,
 ) {
-    //info!("starting marks");
     for (mut state, neighbors) in &mut query {
         let curr_state = state.clone();
         *state = match neighbors.0 {
@@ -87,11 +109,9 @@ fn update_neighbors_system(
     asset_server: Res<AssetServer>,
     mut query: Query<(&CellCoordinates, &CellState, &mut CellLivingNeighborsCount)>,
 ) {
-    for (_, _, mut neighbors) in &mut query {
-        neighbors.0 = 0;
-    }
     let mut new_cells: HashMap<IVec2, u32> = HashMap::new();
-    for (coords, state, _neighbors) in &mut query {
+    for (coords, state, mut neighbors) in &mut query {
+        neighbors.0 = 0;
         if let CellState::Alive = state {
             for x in -1..=1 {
                 for y in -1..=1 {
@@ -108,7 +128,7 @@ fn update_neighbors_system(
             }
         }
     }
-    //info!("{:?}", new_cells.capacity());
+
     for (coords, _state, mut neighbors) in &mut query {
         match new_cells.get(&IVec2 {
             x: coords.0.x,
@@ -149,24 +169,3 @@ fn clear_dead_cells_system(mut commands: Commands, query: Query<(Entity, &CellSt
     }
 }
 
-pub struct CellPlugin;
-
-impl Plugin for CellPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins(crate::timer::TimerPlugin)
-            .init_state::<crate::timer::AllowNextFrame>()
-            // .add_systems(Startup, spawn_cells)
-            .add_systems(
-                Update,
-                (
-                    update_neighbors_system,
-                    update_marks_system,
-                    update_texture_system,
-                    clear_dead_cells_system,
-                    // update_cells_visuals,
-                )
-                    .chain()
-                    .run_if(in_state(crate::timer::AllowNextFrame::Yes)),
-            );
-    }
-}
