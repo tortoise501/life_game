@@ -10,9 +10,9 @@ impl Plugin for CellPlugin {
                 Update,
                 (
                     update_neighbors,
-                    update_marks_system,
-                    update_texture_system,
-                    clear_dead_cells_system,
+                    update_marks,
+                    update_texture,
+                    clear_dead_cells,
                     finish_frame
                 ).chain().run_if(in_state(crate::timer::AllowNextFrame::Yes)),
             );
@@ -144,7 +144,7 @@ fn update_neighbors(
 /// 
 /// +-----------+-----------------+
 
-fn update_marks_system(
+fn update_marks(
     mut query: Query<(&mut CellState, &CellLivingNeighborsCount)>,
 ) {
     for (mut state, neighbors) in &mut query {
@@ -160,7 +160,7 @@ fn update_marks_system(
 
 
 /// Deletes dead cell entities
-fn clear_dead_cells_system(mut commands: Commands, query: Query<(Entity, &CellState)>) {
+fn clear_dead_cells(mut commands: Commands, query: Query<(Entity, &CellState)>) {
     for (cell, state) in &query {
         match state {
             CellState::Dead => commands.entity(cell).despawn(),
@@ -170,7 +170,7 @@ fn clear_dead_cells_system(mut commands: Commands, query: Query<(Entity, &CellSt
 }
 
 /// Updates cell textures and hides dead or unsettled cells
-fn update_texture_system(
+fn update_texture(
     mut query: Query<(
         &mut Handle<Image>,
         &mut Visibility,
