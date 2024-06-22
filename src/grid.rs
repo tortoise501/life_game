@@ -12,6 +12,7 @@ impl Plugin for GridPlugin {
 fn update_grid(
     mut grid_query: Query<(&mut Transform, &mut Sprite, &Grid), (With<Grid>, Without<Camera>)>,
     camera_query: Query<(&OrthographicProjection, &Transform), Without<Grid>>,
+    zoom: Res<crate::camera::Zoom>,
 ) {
     let (projection, camera_transform) = camera_query.single();
 
@@ -19,7 +20,12 @@ fn update_grid(
         //screen size in window pixels with 200 additional pixels to work with camera snapping
         let screen_size = projection.area.max - projection.area.min + Vec2 { x: 200.0, y: 200.0 };
         //change sprite of each grid sprite to be a quarter of a screen
-        sprite.custom_size = Some(screen_size / 2.0);
+        if zoom.0 > 5.{
+            sprite.custom_size = Some(Vec2 { x: 0., y: 0. });
+
+        }else{
+            sprite.custom_size = Some(screen_size / 2.0);
+        }
         //snap camera position depending on cell size
         let snapped_camera_pos = Vec2 {
             x: quotient(camera_transform.translation.x, GRID_CELL_SIDE) * GRID_CELL_SIDE,

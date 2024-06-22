@@ -11,7 +11,8 @@ impl Plugin for CameraPlugin {
         app.insert_resource(Zoom(1.0))
             .add_systems(Startup, spawn_camera)
             .add_systems(Update, camera_zoom)
-            .add_systems(Update, camera_movement_system);
+            .add_systems(Update, camera_movement_system)
+            .insert_resource(ClearColor(Color::BLACK));
     }
 }
 
@@ -43,7 +44,7 @@ fn camera_movement_system(
 }
 /// Zoom ratio
 #[derive(Resource)]
-struct Zoom(f32);
+pub struct Zoom(pub f32);
 
 
 /// Camera zoom on scroll
