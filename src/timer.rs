@@ -6,11 +6,6 @@ pub struct TimerPlugin;
 
 impl Plugin for TimerPlugin {
     fn build(&self, app: &mut App) {
-        // app.init_resource::<ButtonInput<KeyCode>>()
-        //     // .insert_resource(ButtonInput::)
-        //     .init_state::<MyPausedState>()
-        //     .add_systems(Startup, spawn_cells)
-
         app.init_resource::<ButtonInput<KeyCode>>()
             .insert_resource(Speed(1))
             .insert_resource(Timer {
@@ -22,6 +17,7 @@ impl Plugin for TimerPlugin {
     }
 }
 
+/// Processes keyboard input: changes speed on arrow presses, pauses/unpauses the game on space press
 fn keyboard_input(
     keys: Res<ButtonInput<KeyCode>>,
     state: Res<State<GamePause>>,
@@ -35,18 +31,18 @@ fn keyboard_input(
         }
     }
     if keys.just_pressed(KeyCode::ArrowLeft) {
-        // info!("left     {:?}",speed.0);
         speed.0 = num::clamp(speed.0 - 1, 1, 60);
     }
     if keys.just_pressed(KeyCode::ArrowRight) {
-        // info!("right     {:?}",speed.0);
         speed.0 = num::clamp(speed.0 + 1, 1, 60);
     }
 }
 
+/// Time speed
 #[derive(Resource)]
 struct Speed(u32);
 
+/// Pause state
 #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
 enum GamePause {
     #[default]
@@ -54,6 +50,7 @@ enum GamePause {
     Running,
 }
 
+/// Allows or disallows new frames from being played  
 #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum AllowNextFrame {
     #[default]
@@ -61,11 +58,14 @@ pub enum AllowNextFrame {
     Yes,
 }
 
+/// Timer used to control game speed
 #[derive(Resource)]
 struct Timer {
+    /// Last time frame was generated
     last_frame: SystemTime,
 }
 
+/// Updates timers and allows frame if time passed
 fn check_timer(
     mut timer: ResMut<Timer>,
     mut allow_frame: ResMut<NextState<AllowNextFrame>>,
@@ -75,7 +75,7 @@ fn check_timer(
         .duration_since(timer.last_frame)
         .unwrap_or(Duration::from_secs(0));
     if speed.0 == 0 {
-        return; //?Do Something
+        return; //prevent division by 0 
     }
     if passed_time > Duration::from_secs_f32(1.0 / speed.0 as f32) {
         allow_frame.set(AllowNextFrame::Yes);
