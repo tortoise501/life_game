@@ -2,8 +2,7 @@ use bevy::{
     input::mouse::{MouseMotion, MouseWheel},
     prelude::*,
 };
-
-// const CAMERA_DISTANCE: f32 = 24.0;
+use num::traits::clamp_min;
 
 pub struct CameraPlugin;
 
@@ -12,7 +11,7 @@ impl Plugin for CameraPlugin {
         app.insert_resource(Zoom(1.0))
             .add_systems(Startup, spawn_camera)
             .add_systems(Update, camera_zoom)
-            .add_systems(Update, camera_movement);
+            .add_systems(Update, camera_movement_system);
     }
 }
 
@@ -23,13 +22,14 @@ fn spawn_camera(mut commands: Commands) {
     });
 }
 
-fn camera_movement(
+/// Camera movement on wheel hold
+fn camera_movement_system(
     buttons: Res<ButtonInput<MouseButton>>,
     mut evr_motion: EventReader<MouseMotion>,
-    mut query: Query<&mut Transform, With<Camera>>,
+    mut camera_q: Query<&mut Transform, With<Camera>>,
     zoom: Res<Zoom>,
 ) {
-    for mut camera_transform in &mut query {
+    for mut camera_transform in &mut camera_q {
         if buttons.pressed(MouseButton::Middle) {
             for ev in evr_motion.read() {
                 camera_transform.translation += Vec3 {
@@ -41,10 +41,12 @@ fn camera_movement(
         }
     }
 }
-
+/// Zoom ratio
 #[derive(Resource)]
 struct Zoom(f32);
 
+
+/// Camera zoom on scroll
 fn camera_zoom(
     mut evr_scroll: EventReader<MouseWheel>,
     mut zoom: ResMut<Zoom>,
@@ -54,11 +56,8 @@ fn camera_zoom(
 
     for ev in evr_scroll.read() {
         match ev.unit {
-            MouseScrollUnit::Line => {
-                zoom.0 -= 0.1 * ev.y; //? add delta seconds?
-            }
-            MouseScrollUnit::Pixel => {
-                zoom.0 -= 0.1 * ev.y; //? add delta seconds?
+            MouseScrollUnit::Line | MouseScrollUnit::Pixel => {
+                zoom.0 = clamp_min(zoom.0 - 0.1 * ev.y,0.5);
             }
         }
     }
