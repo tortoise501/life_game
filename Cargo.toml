@@ -5,7 +5,9 @@ edition = "2021" # this needs to be 2021, or you need to set "resolver=2"
 
 [dependencies]
 bevy = { version = "0.13.2", features = ["dynamic_linking"] } # make sure this is the latest version
+futures-lite = "2.3.0"
 num = { version = "0.4.3"}
+rfd = {version = "0.14.1"}
 
 [profile.dev]
 opt-level = 1
